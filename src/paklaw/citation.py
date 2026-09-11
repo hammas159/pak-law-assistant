@@ -31,24 +31,36 @@ from dataclasses import dataclass
 
 # Common statute abbreviations, normalised to a canonical key.
 STATUTES: dict[str, str] = {
-    "ppc": "PPC", "p.p.c.": "PPC", "pakistan penal code": "PPC",
-    "crpc": "CrPC", "cr.p.c.": "CrPC", "code of criminal procedure": "CrPC",
-    "cpc": "CPC", "c.p.c.": "CPC", "code of civil procedure": "CPC",
-    "qso": "QSO", "qanun-e-shahadat": "QSO", "qanun e shahadat": "QSO",
-    "constitution": "CONST", "constitution of pakistan": "CONST",
-    "companies act": "COMPANIES", "income tax ordinance": "ITO",
-    "sales tax act": "STA", "contract act": "CONTRACT",
-    "specific relief act": "SRA", "limitation act": "LIMITATION",
-    "pdpa": "PDPA", "personal data protection act": "PDPA",
-    "peca": "PECA", "prevention of electronic crimes act": "PECA",
+    "ppc": "PPC",
+    "p.p.c.": "PPC",
+    "pakistan penal code": "PPC",
+    "crpc": "CrPC",
+    "cr.p.c.": "CrPC",
+    "code of criminal procedure": "CrPC",
+    "cpc": "CPC",
+    "c.p.c.": "CPC",
+    "code of civil procedure": "CPC",
+    "qso": "QSO",
+    "qanun-e-shahadat": "QSO",
+    "qanun e shahadat": "QSO",
+    "constitution": "CONST",
+    "constitution of pakistan": "CONST",
+    "companies act": "COMPANIES",
+    "income tax ordinance": "ITO",
+    "sales tax act": "STA",
+    "contract act": "CONTRACT",
+    "specific relief act": "SRA",
+    "limitation act": "LIMITATION",
+    "pdpa": "PDPA",
+    "personal data protection act": "PDPA",
+    "peca": "PECA",
+    "prevention of electronic crimes act": "PECA",
 }
 
 # Law reports used in Pakistani practice.
 REPORTS = {"PLD", "SCMR", "CLC", "YLR", "MLD", "PTD", "PLC", "CLD", "PCrLJ", "NLR"}
 
-_STATUTE_ALTERNATION = "|".join(
-    sorted((re.escape(k) for k in STATUTES), key=len, reverse=True)
-)
+_STATUTE_ALTERNATION = "|".join(sorted((re.escape(k) for k in STATUTES), key=len, reverse=True))
 
 # "Section 302 PPC", "s. 302 of the Pakistan Penal Code", "§302 PPC"
 _SECTION = re.compile(
@@ -74,7 +86,9 @@ _ORDER_RULE = re.compile(
 )
 
 # "SRO 1125(I)/2011" - subordinate legislation.
-_SRO = re.compile(r"s\.?r\.?o\.?\s*(?P<number>\d+)\s*(?:\((?P<series>[IVX]+)\))?\s*/\s*(?P<year>\d{4})", re.I)
+_SRO = re.compile(
+    r"s\.?r\.?o\.?\s*(?P<number>\d+)\s*(?:\((?P<series>[IVX]+)\))?\s*/\s*(?P<year>\d{4})", re.I
+)
 
 # "PLD 2015 SC 401", "2019 SCMR 1234" - both orderings occur in practice.
 _REPORT_A = re.compile(
@@ -89,10 +103,10 @@ _REPORT_B = re.compile(
 
 @dataclass(frozen=True)
 class Citation:
-    kind: str                 # "statutory" | "subordinate" | "reported"
-    statute: str = ""         # canonical key, e.g. "PPC"
-    provision: str = ""       # "302", "25", "XXXIX/1"
-    unit: str = ""            # "section" | "article" | "rule"
+    kind: str  # "statutory" | "subordinate" | "reported"
+    statute: str = ""  # canonical key, e.g. "PPC"
+    provision: str = ""  # "302", "25", "XXXIX/1"
+    unit: str = ""  # "section" | "article" | "rule"
     report: str = ""
     year: str = ""
     court: str = ""
@@ -153,49 +167,87 @@ def parse(text: str) -> list[Citation]:
 
     for match in _ORDER_RULE.finditer(text):
         consumed.append(match.span())
-        found.append((match.start(), Citation(
-            kind="statutory", statute=_canonical_statute(match.group("statute"), "CPC"),
-            provision=f"{match.group('order').upper()}/{match.group('rule')}",
-            unit="rule", raw=match.group(0),
-        )))
+        found.append(
+            (
+                match.start(),
+                Citation(
+                    kind="statutory",
+                    statute=_canonical_statute(match.group("statute"), "CPC"),
+                    provision=f"{match.group('order').upper()}/{match.group('rule')}",
+                    unit="rule",
+                    raw=match.group(0),
+                ),
+            )
+        )
 
     for match in _SRO.finditer(text):
         if overlaps(*match.span()):
             continue
         consumed.append(match.span())
-        found.append((match.start(), Citation(
-            kind="subordinate", provision=match.group("number"),
-            year=match.group("year"), raw=match.group(0),
-        )))
+        found.append(
+            (
+                match.start(),
+                Citation(
+                    kind="subordinate",
+                    provision=match.group("number"),
+                    year=match.group("year"),
+                    raw=match.group(0),
+                ),
+            )
+        )
 
     for pattern in (_REPORT_A, _REPORT_B):
         for match in pattern.finditer(text):
             if overlaps(*match.span()):
                 continue
             consumed.append(match.span())
-            found.append((match.start(), Citation(
-                kind="reported", report=match.group("report").upper(),
-                year=match.group("year"), court=(match.group("court") or "").upper(),
-                page=match.group("page"), raw=match.group(0),
-            )))
+            found.append(
+                (
+                    match.start(),
+                    Citation(
+                        kind="reported",
+                        report=match.group("report").upper(),
+                        year=match.group("year"),
+                        court=(match.group("court") or "").upper(),
+                        page=match.group("page"),
+                        raw=match.group(0),
+                    ),
+                )
+            )
 
     for match in _ARTICLE.finditer(text):
         if overlaps(*match.span()):
             continue
         consumed.append(match.span())
-        found.append((match.start(), Citation(
-            kind="statutory", statute="CONST", provision=match.group("number").upper(),
-            unit="article", raw=match.group(0),
-        )))
+        found.append(
+            (
+                match.start(),
+                Citation(
+                    kind="statutory",
+                    statute="CONST",
+                    provision=match.group("number").upper(),
+                    unit="article",
+                    raw=match.group(0),
+                ),
+            )
+        )
 
     for match in _SECTION.finditer(text):
         if overlaps(*match.span()):
             continue
         consumed.append(match.span())
-        found.append((match.start(), Citation(
-            kind="statutory", statute=_canonical_statute(match.group("statute")),
-            provision=match.group("number").upper(), unit="section", raw=match.group(0),
-        )))
+        found.append(
+            (
+                match.start(),
+                Citation(
+                    kind="statutory",
+                    statute=_canonical_statute(match.group("statute")),
+                    provision=match.group("number").upper(),
+                    unit="section",
+                    raw=match.group(0),
+                ),
+            )
+        )
 
     return [citation for _, citation in sorted(found, key=lambda pair: pair[0])]
 
@@ -209,7 +261,8 @@ def resolve_bare(citations: list[Citation], *, default_statute: str) -> list[Cit
     wrong Act is a serious error that looks like a correct answer.
     """
     return [
-        c if (c.statute or c.kind != "statutory")
+        c
+        if (c.statute or c.kind != "statutory")
         else Citation(**{**c.__dict__, "statute": default_statute})
         for c in citations
     ]

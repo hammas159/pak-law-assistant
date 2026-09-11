@@ -26,7 +26,7 @@ import datetime as dt
 from dataclasses import dataclass, field
 
 from .citation import Citation, parse
-from .corpus import Corpus, Provision
+from .corpus import Corpus
 from .retrieve import Hit, LawSearch
 
 
@@ -114,11 +114,14 @@ class LawAssistant:
     def _to_passage(hit: Hit, as_of: dt.date) -> Passage:
         p = hit.provision
         return Passage(
-            citation=p.citation().pretty(), heading=p.heading, text=p.text,
+            citation=p.citation().pretty(),
+            heading=p.heading,
+            text=p.text,
             statute=p.statute,
             in_force_from=p.in_force_from.isoformat(),
             in_force_to=p.in_force_to.isoformat() if p.in_force_to else None,
-            score=hit.score, matched_terms=hit.why(),
+            score=hit.score,
+            matched_terms=hit.why(),
             status_note=p.status_note(as_of),
         )
 
@@ -140,22 +143,30 @@ class LawAssistant:
                 continue
             if self.corpus.version_on(key, as_of) is None:
                 latest = self.corpus.versions(key)[-1]
-                superseded.append({
-                    "citation": citation.pretty(),
-                    "status": latest.status_note(as_of) or "not in force on this date",
-                    "history": self.corpus.history(key),
-                })
+                superseded.append(
+                    {
+                        "citation": citation.pretty(),
+                        "status": latest.status_note(as_of) or "not in force on this date",
+                        "history": self.corpus.history(key),
+                    }
+                )
         return citations, superseded
 
     # ---- the answer ------------------------------------------------------------
 
     def answer(
-        self, question: str, *, as_of: str | dt.date | None = None,
+        self,
+        question: str,
+        *,
+        as_of: str | dt.date | None = None,
         statute: str | None = None,
     ) -> Answer:
         as_of_date = (
-            dt.date.today() if as_of is None
-            else dt.date.fromisoformat(as_of) if isinstance(as_of, str) else as_of
+            dt.date.today()
+            if as_of is None
+            else dt.date.fromisoformat(as_of)
+            if isinstance(as_of, str)
+            else as_of
         )
         result = Answer(question=question, as_of=as_of_date.isoformat())
 
@@ -176,11 +187,12 @@ class LawAssistant:
                 provision = self.corpus.version_on(key, as_of_date)
                 if provision is None:
                     continue  # already recorded in `superseded`
-                resolved.append(self._to_passage(
-                    Hit(provision=provision, score=float("inf"),
-                        matched_terms={"cited": 1.0}),
-                    as_of_date,
-                ))
+                resolved.append(
+                    self._to_passage(
+                        Hit(provision=provision, score=float("inf"), matched_terms={"cited": 1.0}),
+                        as_of_date,
+                    )
+                )
 
             if resolved:
                 result.passages = resolved[: self.max_passages]
@@ -193,17 +205,14 @@ class LawAssistant:
 
             if superseded:
                 result.refused = True
-                result.refusal_reason = (
-                    f"{REFUSAL_NOT_IN_FORCE}: "
-                    + "; ".join(f"{s['citation']} — {s['status']}" for s in superseded)
+                result.refusal_reason = f"{REFUSAL_NOT_IN_FORCE}: " + "; ".join(
+                    f"{s['citation']} — {s['status']}" for s in superseded
                 )
                 return result
 
             if unknown:
                 result.refused = True
-                result.refusal_reason = (
-                    f"{REFUSAL_UNKNOWN_CITATION}: {', '.join(unknown)}"
-                )
+                result.refusal_reason = f"{REFUSAL_UNKNOWN_CITATION}: {', '.join(unknown)}"
                 return result
 
         hits = self.search.search(
@@ -218,8 +227,7 @@ class LawAssistant:
         if hits[0].score < self.min_score:
             result.refused = True
             result.refusal_reason = (
-                f"{REFUSAL_WEAK} (best score {hits[0].score:.2f} below "
-                f"{self.min_score:.2f})"
+                f"{REFUSAL_WEAK} (best score {hits[0].score:.2f} below {self.min_score:.2f})"
             )
             return result
 

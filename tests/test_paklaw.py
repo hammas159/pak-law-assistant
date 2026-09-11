@@ -15,7 +15,7 @@ from paklaw.answer import (
     REFUSAL_UNKNOWN_CITATION,
     LawAssistant,
 )
-from paklaw.citation import STATUTES, Citation, parse, resolve_bare
+from paklaw.citation import STATUTES, parse, resolve_bare
 from paklaw.corpus import Corpus, CorpusError, Provision
 from paklaw.retrieve import BM25Index, LawSearch, tokenise
 
@@ -33,31 +33,52 @@ PECA_NEW = (
 
 def corpus() -> Corpus:
     c = Corpus()
-    c.add(Provision(
-        statute="PECA", unit="section", number="20",
-        heading="Offences against dignity of a natural person", text=PECA_OLD,
-        in_force_from="2016-08-19", in_force_to="2022-02-20",
-        manner="substituted", amended_by="Ordinance II of 2022",
-        superseded_by="PECA s.20 as amended 2022",
-    ))
-    c.add(Provision(
-        statute="PECA", unit="section", number="20",
-        heading="Offences against dignity of a natural person", text=PECA_NEW,
-        in_force_from="2022-02-20",
-    ))
-    c.add(Provision(
-        statute="CONST", unit="article", number="25", heading="Equality of citizens",
-        text="All citizens are equal before law and are entitled to equal protection of "
-             "law. There shall be no discrimination on the basis of sex.",
-        in_force_from="1973-08-14",
-    ))
-    c.add(Provision(
-        statute="PPC", unit="section", number="302",
-        heading="Punishment of qatl-i-amd",
-        text="Whoever commits qatl-i-amd shall be punished with death as qisas, or with "
-             "death or imprisonment for life as tazir.",
-        in_force_from="1997-04-11",
-    ))
+    c.add(
+        Provision(
+            statute="PECA",
+            unit="section",
+            number="20",
+            heading="Offences against dignity of a natural person",
+            text=PECA_OLD,
+            in_force_from="2016-08-19",
+            in_force_to="2022-02-20",
+            manner="substituted",
+            amended_by="Ordinance II of 2022",
+            superseded_by="PECA s.20 as amended 2022",
+        )
+    )
+    c.add(
+        Provision(
+            statute="PECA",
+            unit="section",
+            number="20",
+            heading="Offences against dignity of a natural person",
+            text=PECA_NEW,
+            in_force_from="2022-02-20",
+        )
+    )
+    c.add(
+        Provision(
+            statute="CONST",
+            unit="article",
+            number="25",
+            heading="Equality of citizens",
+            text="All citizens are equal before law and are entitled to equal protection of "
+            "law. There shall be no discrimination on the basis of sex.",
+            in_force_from="1973-08-14",
+        )
+    )
+    c.add(
+        Provision(
+            statute="PPC",
+            unit="section",
+            number="302",
+            heading="Punishment of qatl-i-amd",
+            text="Whoever commits qatl-i-amd shall be punished with death as qisas, or with "
+            "death or imprisonment for life as tazir.",
+            in_force_from="1997-04-11",
+        )
+    )
     return c
 
 
@@ -68,8 +89,7 @@ def assistant() -> LawAssistant:
 class TestCitationParsing:
     @pytest.mark.parametrize(
         "text",
-        ["Section 302 PPC", "s. 302 of the Pakistan Penal Code", "sec 302, P.P.C.",
-         "§302 PPC"],
+        ["Section 302 PPC", "s. 302 of the Pakistan Penal Code", "sec 302, P.P.C.", "§302 PPC"],
     )
     def test_every_written_form_resolves_to_one_key(self, text):
         """Otherwise retrieval treats them as different provisions and an answer
@@ -92,8 +112,7 @@ class TestCitationParsing:
 
     @pytest.mark.parametrize(
         ("text", "key"),
-        [("PLD 2015 SC 401", "PLD:2015:SC:401"),
-         ("2019 SCMR 1234", "SCMR:2019:-:1234")],
+        [("PLD 2015 SC 401", "PLD:2015:SC:401"), ("2019 SCMR 1234", "SCMR:2019:-:1234")],
     )
     def test_law_reports_parse_in_both_orderings(self, text, key):
         """A statute's meaning frequently lives in the case law, and both orderings
@@ -153,8 +172,15 @@ class TestCorpus:
 
     def test_an_impossible_interval_is_refused(self):
         with pytest.raises(CorpusError):
-            Provision(statute="X", unit="section", number="1", heading="", text="",
-                      in_force_from="2020-01-01", in_force_to="2019-01-01")
+            Provision(
+                statute="X",
+                unit="section",
+                number="1",
+                heading="",
+                text="",
+                in_force_from="2020-01-01",
+                in_force_to="2019-01-01",
+            )
 
     def test_a_clean_corpus_validates(self):
         assert corpus().validate() == []
@@ -163,15 +189,31 @@ class TestCorpus:
         """If two versions are in force on one date, retrieval returns whichever it
         reaches first and the result is not reproducible."""
         c = corpus()
-        c.add(Provision(statute="PECA", unit="section", number="20", heading="",
-                        text="third", in_force_from="2020-01-01"))
+        c.add(
+            Provision(
+                statute="PECA",
+                unit="section",
+                number="20",
+                heading="",
+                text="third",
+                in_force_from="2020-01-01",
+            )
+        )
         assert any("overlap" in p or "never ends" in p for p in c.validate())
 
     def test_more_than_one_live_version_is_caught(self):
         c = Corpus()
         for _ in range(2):
-            c.add(Provision(statute="X", unit="section", number="1", heading="",
-                            text="t", in_force_from="2020-01-01"))
+            c.add(
+                Provision(
+                    statute="X",
+                    unit="section",
+                    number="1",
+                    heading="",
+                    text="t",
+                    in_force_from="2020-01-01",
+                )
+            )
         assert any("currently in force" in p for p in c.validate())
 
     def test_status_note_explains_a_repeal(self):
@@ -248,9 +290,18 @@ class TestAnswering:
     def test_a_citation_not_in_force_is_refused_with_its_history(self):
         """A repealed section reads exactly like a live one. Only the corpus knows."""
         c = Corpus()
-        c.add(Provision(statute="PECA", unit="section", number="66", heading="Repealed",
-                        text="old text", in_force_from="2016-01-01",
-                        in_force_to="2020-01-01", manner="repealed"))
+        c.add(
+            Provision(
+                statute="PECA",
+                unit="section",
+                number="66",
+                heading="Repealed",
+                text="old text",
+                in_force_from="2016-01-01",
+                in_force_to="2020-01-01",
+                manner="repealed",
+            )
+        )
         result = LawAssistant(corpus=c).answer("section 66 PECA", as_of="2026-01-01")
         assert result.refused
         assert REFUSAL_NOT_IN_FORCE in result.refusal_reason

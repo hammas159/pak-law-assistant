@@ -33,10 +33,49 @@ _TOKEN = re.compile(r"[\w؀-ۿ']+", re.UNICODE)
 # Words that carry no discriminating power in a statute book, where nearly every
 # provision contains "section", "act", "shall" and "person".
 LEGAL_STOPWORDS = {
-    "the", "a", "an", "of", "in", "to", "for", "by", "or", "and", "any", "such",
-    "shall", "be", "is", "are", "as", "on", "with", "under", "this", "that", "it",
-    "act", "section", "sub", "clause", "provided", "may", "which", "who", "where",
-    "has", "have", "had", "been", "was", "were", "not", "no", "if", "than", "then",
+    "the",
+    "a",
+    "an",
+    "of",
+    "in",
+    "to",
+    "for",
+    "by",
+    "or",
+    "and",
+    "any",
+    "such",
+    "shall",
+    "be",
+    "is",
+    "are",
+    "as",
+    "on",
+    "with",
+    "under",
+    "this",
+    "that",
+    "it",
+    "act",
+    "section",
+    "sub",
+    "clause",
+    "provided",
+    "may",
+    "which",
+    "who",
+    "where",
+    "has",
+    "have",
+    "had",
+    "been",
+    "was",
+    "were",
+    "not",
+    "no",
+    "if",
+    "than",
+    "then",
 }
 
 
@@ -137,8 +176,7 @@ class BM25Index:
                 matched[term] = round(contribution, 4)
 
             if score > 0:
-                hits.append(Hit(provision=provision, score=round(score, 6),
-                                matched_terms=matched))
+                hits.append(Hit(provision=provision, score=round(score, 6), matched_terms=matched))
 
         hits.sort(key=lambda h: -h.score)
         return hits[:limit]
@@ -163,7 +201,11 @@ class LawSearch:
         return self._indexes[key]
 
     def search(
-        self, query: str, *, as_of: str | dt.date, limit: int = 5,
+        self,
+        query: str,
+        *,
+        as_of: str | dt.date,
+        limit: int = 5,
         statute: str | None = None,
     ) -> list[Hit]:
         as_of = dt.date.fromisoformat(as_of) if isinstance(as_of, str) else as_of

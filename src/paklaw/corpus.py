@@ -43,7 +43,7 @@ class Provision:
     """One section, article or rule, as it stood over one interval."""
 
     statute: str
-    unit: str                  # "section" | "article" | "rule"
+    unit: str  # "section" | "article" | "rule"
     number: str
     heading: str
     text: str
@@ -62,9 +62,7 @@ class Provision:
         self.in_force_from = _as_date(self.in_force_from)
         self.in_force_to = _as_date(self.in_force_to)
         if self.in_force_to and self.in_force_to < self.in_force_from:
-            raise CorpusError(
-                f"{self.key}: in_force_to precedes in_force_from"
-            )
+            raise CorpusError(f"{self.key}: in_force_to precedes in_force_from")
 
     @property
     def key(self) -> str:
@@ -85,8 +83,11 @@ class Provision:
 
     def citation(self) -> Citation:
         return Citation(
-            kind="statutory", statute=self.statute, unit=self.unit,
-            provision=self.number, raw=self.key,
+            kind="statutory",
+            statute=self.statute,
+            unit=self.unit,
+            provision=self.number,
+            raw=self.key,
         )
 
     def status_note(self, as_of: dt.date) -> str:
@@ -163,7 +164,7 @@ class Corpus:
 
         for key, versions in by_key.items():
             ordered = sorted(versions, key=lambda p: p.in_force_from)
-            for earlier, later in zip(ordered, ordered[1:]):
+            for earlier, later in zip(ordered, ordered[1:], strict=False):
                 if earlier.in_force_to is None:
                     problems.append(
                         f"{key}: version from {earlier.in_force_from} never ends, but "
