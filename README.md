@@ -151,3 +151,58 @@ than one live version of a provision.
 ## License
 
 MIT
+
+---
+
+## Run it yourself
+
+```bash
+git clone https://github.com/hammas159/pak-law-assistant
+cd pak-law-assistant
+
+pip install -e .         # zero dependencies to resolve
+pytest -q                # 49 tests, no corpus download
+```
+
+```python
+from paklaw import Corpus, Provision, LawAssistant
+
+corpus = Corpus()
+corpus.add(Provision(statute="PECA", unit="section", number="20",
+                     heading="Offences against dignity of a natural person",
+                     text=original_text,
+                     in_force_from="2016-08-19", in_force_to="2022-02-20",
+                     manner="substituted", amended_by="Ordinance II of 2022"))
+corpus.add(Provision(statute="PECA", unit="section", number="20",
+                     heading="Offences against dignity of a natural person",
+                     text=amended_text, in_force_from="2022-02-20"))
+
+corpus.validate()        # overlapping versions, gaps, multiple live versions
+
+a = LawAssistant(corpus=corpus)
+a.answer("punishment under section 20 PECA", as_of="2026-09-11").render()
+a.answer("punishment under section 20 PECA", as_of="2018-01-01").render()  # different
+a.history("section 20 PECA")
+```
+
+Loading a corpus is your job — the Pakistan Code is public. The four demo provisions in
+the tests are **illustrative and not authoritative; do not rely on them.**
+
+## Problems hit while building this
+
+**Provisions were being attributed to no Act at all.** Statute abbreviations were
+normalised by stripping a trailing full stop, which turned the lookup key `p.p.c.` into
+`p.p.c` — not in the table. So `sec 302, P.P.C.` parsed as section 302 of *nothing*,
+while `Section 302 PPC` resolved correctly, and the two forms of one provision were
+treated as different provisions by retrieval. *Fixed* by trying both the dotted and
+undotted forms, with a test asserting four written variants produce one key.
+
+**`Order XXXIX Rule 1 CPC` parsed as two citations.** Civil procedure is cited by Order
+*and* Rule together; splitting it doubles the count of authorities in an answer. *Fixed*
+by consuming matched spans so a more specific pattern wins.
+
+**The first design had an optional `as_of` date.** It defaulted to today, which is
+correct until someone asks about conduct from 2019 and gets today's law, fluently and
+with a correct-looking citation. *Fixed* by making the date mandatory throughout — an
+optional parameter gets a default, and the default eventually gets used for a question
+where it is wrong.
