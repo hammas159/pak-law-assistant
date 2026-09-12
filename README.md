@@ -1,4 +1,4 @@
-# pak-law-assistant
+# pak-law-assistant (Python, BM25, zero dependencies)
 
 [![ci](https://github.com/hammas159/pak-law-assistant/actions/workflows/ci.yml/badge.svg)](https://github.com/hammas159/pak-law-assistant/actions/workflows/ci.yml)
 ![python](https://img.shields.io/badge/python-3.10%2B-blue)
