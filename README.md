@@ -1,19 +1,45 @@
-# pak-law-assistant (Python, BM25, zero dependencies)
+<h1 align="center">pak-law-assistant</h1>
+<p align="center"><i>Legal question answering over Pakistani statutes that will not cite a repealed provision</i></p>
 
-[![ci](https://github.com/hammas159/pak-law-assistant/actions/workflows/ci.yml/badge.svg)](https://github.com/hammas159/pak-law-assistant/actions/workflows/ci.yml)
-![python](https://img.shields.io/badge/python-3.10%2B-blue)
-![dependencies](https://img.shields.io/badge/dependencies-none-success)
-![license](https://img.shields.io/badge/license-MIT-green)
+<p align="center">
+  <a href="#the-failure-this-exists-to-prevent">The failure it prevents</a> &middot;
+  <a href="#four-refusal-conditions">Four refusals</a> &middot;
+  <a href="#citation-parsing">Citation parsing</a> &middot;
+  <a href="#why-bm25-and-not-embeddings">Why BM25</a> &middot;
+  <a href="#amendment-history-is-often-the-question-itself">Amendment history</a> &middot;
+  <a href="#problems-hit-while-building-this">Problems hit</a>
+</p>
 
-**Legal question answering over Pakistani statutes that will not cite a repealed
-provision.**
-
-Citation parsing · temporal corpus · BM25 retrieval · citation-grounded answers with
-four refusal conditions. Zero dependencies.
+<p align="center">
+  <a href="https://github.com/hammas159/pak-law-assistant/actions/workflows/ci.yml"><img src="https://github.com/hammas159/pak-law-assistant/actions/workflows/ci.yml/badge.svg" alt="ci"></a>
+  <img src="https://img.shields.io/badge/python-3.11%2B-blue" alt="python">
+  <img src="https://img.shields.io/badge/dependencies-zero-success" alt="deps">
+  <img src="https://img.shields.io/badge/retrieval-BM25-336791" alt="retrieval">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="license"></a>
+</p>
 
 ---
 
 ## The failure this exists to prevent
+
+```mermaid
+flowchart LR
+    Q["legal question"] --> R["BM25 retrieval<br/>over a temporal corpus"]
+    R --> C["parse the citations"]
+    C --> T{"was this provision<br/>in force at the relevant date?"}
+    T -->|"repealed"| X["REFUSE"]
+    T -->|"in force"| G["citation-grounded answer"]
+    G --> F{"four refusal conditions"}
+    F -->|"any triggered"| X
+    F -->|"none"| A["answer, with citations"]
+
+    style X fill:#dc2626,color:#fff
+    style A fill:#16a34a,color:#fff
+```
+
+**Citing a repealed provision is worse than refusing to answer.** The corpus is temporal,
+so "what does the law say" is always resolved as "what did the law say *on this date*".
+
 
 Ask a normal RAG system *"what is the punishment under section 20 PECA?"* and it
 retrieves the text of section 20, which is confident, specific, correctly cited — and
@@ -147,6 +173,10 @@ than one live version of a provision.
   provisions.
 - **This is not legal advice**, and a system that produced fluent legal prose would
   invite reliance it has not earned. The dry, citation-first output is deliberate.
+
+## Keywords
+
+legal AI &middot; legal question answering &middot; statutory interpretation &middot; Pakistani law &middot; citation parsing &middot; repealed provisions &middot; temporal corpus &middot; point-in-time law &middot; BM25 &middot; retrieval &middot; grounded generation &middot; refusal conditions &middot; amendment history &middot; legal tech &middot; zero dependencies
 
 ## License
 
