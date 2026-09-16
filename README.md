@@ -140,6 +140,25 @@ assistant.history("section 20 PECA")
 amendment, about which version governs a pending case — and it is **unanswerable from a
 flat corpus**.
 
+---
+
+## Input
+
+![input](docs/images/input.png)
+
+## Output
+
+`python demo.py`
+
+![output](docs/images/output.png)
+
+*Questions 1 and 2 are the same sentence. The only difference is the date they are about,
+and it changes the answer from five years and ten million rupees to three years and one
+million. A flat corpus returns one of these and cannot tell you which. Question 3 is
+refused rather than answered from the nearest-looking provision.*
+
+---
+
 ## Corpus validation
 
 `corpus.validate()` catches the structural faults that produce wrong answers silently:
