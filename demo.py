@@ -6,6 +6,7 @@ The corpus carries PECA s.20 twice -- the text in force until 20 Feb 2022 and
 the text substituted that day. Which one is correct depends entirely on the
 date the question is about. No network, no model, no dependencies.
 """
+
 import sys
 
 sys.path.insert(0, "src")
@@ -30,50 +31,81 @@ PECA_NEW = (
 
 def build() -> Corpus:
     c = Corpus()
-    c.add(Provision(
-        statute="PECA", unit="section", number="20",
-        heading="Offences against dignity of a natural person",
-        text=PECA_OLD, in_force_from="2016-08-19", in_force_to="2022-02-20",
-        manner="substituted", amended_by="Ordinance II of 2022",
-        superseded_by="PECA s.20 as amended 2022",
-    ))
-    c.add(Provision(
-        statute="PECA", unit="section", number="20",
-        heading="Offences against dignity of a natural person",
-        text=PECA_NEW, in_force_from="2022-02-20",
-    ))
-    c.add(Provision(
-        statute="PPC", unit="section", number="302",
-        heading="Punishment of qatl-i-amd",
-        text="Whoever commits qatl-i-amd shall be punished with death as qisas, or with "
-             "death or imprisonment for life as tazir.",
-        in_force_from="1997-04-11",
-    ))
-    c.add(Provision(
-        statute="CONST", unit="article", number="25",
-        heading="Equality of citizens",
-        text="All citizens are equal before law and are entitled to equal protection of "
-             "law. There shall be no discrimination on the basis of sex.",
-        in_force_from="1973-08-14",
-    ))
+    c.add(
+        Provision(
+            statute="PECA",
+            unit="section",
+            number="20",
+            heading="Offences against dignity of a natural person",
+            text=PECA_OLD,
+            in_force_from="2016-08-19",
+            in_force_to="2022-02-20",
+            manner="substituted",
+            amended_by="Ordinance II of 2022",
+            superseded_by="PECA s.20 as amended 2022",
+        )
+    )
+    c.add(
+        Provision(
+            statute="PECA",
+            unit="section",
+            number="20",
+            heading="Offences against dignity of a natural person",
+            text=PECA_NEW,
+            in_force_from="2022-02-20",
+        )
+    )
+    c.add(
+        Provision(
+            statute="PPC",
+            unit="section",
+            number="302",
+            heading="Punishment of qatl-i-amd",
+            text="Whoever commits qatl-i-amd shall be punished with death as qisas, or with "
+            "death or imprisonment for life as tazir.",
+            in_force_from="1997-04-11",
+        )
+    )
+    c.add(
+        Provision(
+            statute="CONST",
+            unit="article",
+            number="25",
+            heading="Equality of citizens",
+            text="All citizens are equal before law and are entitled to equal protection of "
+            "law. There shall be no discrimination on the basis of sex.",
+            in_force_from="1973-08-14",
+        )
+    )
     return c
 
 
 assistant = LawAssistant(corpus=build())
 
 ASKS = [
-    ("What is the penalty for publicly transmitting false information about a person?",
-     "2026-01-01", "asked about today"),
-    ("What is the penalty for publicly transmitting false information about a person?",
-     "2020-06-01", "the same question, asked about 2020"),
-    ("What are the registration requirements for a private limited company?",
-     "2026-01-01", "nothing in the corpus covers this"),
+    (
+        "What is the penalty for publicly transmitting false information about a person?",
+        "2026-01-01",
+        "asked about today",
+    ),
+    (
+        "What is the penalty for publicly transmitting false information about a person?",
+        "2020-06-01",
+        "the same question, asked about 2020",
+    ),
+    (
+        "What are the registration requirements for a private limited company?",
+        "2026-01-01",
+        "nothing in the corpus covers this",
+    ),
 ]
 
 print("INPUT")
-print(f"   corpus             {len(build().provisions)} provisions "
-      "(PECA s.20 twice: pre- and post-2022)")
-for q, as_of, note in ASKS:
+print(
+    f"   corpus             {len(build().provisions)} provisions "
+    "(PECA s.20 twice: pre- and post-2022)"
+)
+for q, as_of, _note in ASKS:
     print(f'   as_of {as_of}   "{q[:58]}..."')
 print()
 
@@ -89,6 +121,6 @@ for n, (q, as_of, note) in enumerate(ASKS, 1):
             print(f"       {p.citation}{note_txt}")
             print(f"       in force   {p.in_force_from} -> {p.in_force_to or 'present'}")
             # The operative clause is the penalty, and it is at the end of the text.
-            penalty = p.text[p.text.index("shall be punished"):]
+            penalty = p.text[p.text.index("shall be punished") :]
             print(f"       ...{penalty}")
     print()
