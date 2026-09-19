@@ -1,4 +1,4 @@
-<h1 align="center">pak-law-assistant</h1>
+<h1 align="center">pak-law-assistant (Python · BM25 · temporal validity graph)</h1>
 <p align="center"><i>Legal question answering over Pakistani statutes that will not cite a repealed provision</i></p>
 
 <p align="center">
